@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QAP - Quick Access Portal</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .header {
+      background: rgba(255,255,255,0.95);
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    }
+    .header h1 {
+      color: #667eea;
+      font-size: 28px;
+    }
+    .header .actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+    .btn-info {
+      background: #909399;
+;
+    }
+         color: white .btn-danger {
+      background: #f56c6c;
+      color: white;
+    }
+    .btn-success {
+      background: #67c23a;
+      color: white;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+    .search-box {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .search-input {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e4e7ed;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .categories {
+      margin-top: 15px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .category-tag {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 20px;
+      background: #f5f7fa;
+      color: #606266;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+    }
+    .category-tag:hover, .category-tag.active {
+      background: #667eea;
+      color: white;
+    }
+    .websites-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .website-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .website-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .website-icon {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f7fa;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .website-icon img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+    .website-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .website-info h4 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      color: #303133;
+    }
+    .website-info p {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #606266;
+      line-height: 1.4;
+    }
+    .website-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #909399;
+    }
+    .website-category {
+      background: #ecf5ff;
+      color: #409eff;
+      padding: 2px 10px;
+      border-radius: 10px;
+    }
+    .footer {
+      text-align: center;
+      padding: 30px;
+      color: white;
+      opacity: 0.8;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+    }
+    .modal h2 {
+      margin: 0 0 20px 0;
+      color: #303133;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #606266;
+      font-weight: 500;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #dcdfe6;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .websites-list {
+      margin-top: 20px;
+    }
+    .websites-list .website-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    .websites-list .website-item:last-child {
+      border-bottom: none;
+    }
+    .websites-list .website-item .info h4 {
+      margin-bottom: 5px;
+    }
+    .websites-list .website-item .info p {
+      font-size: 12px;
+      color: #909399;
+    }
+    .websites-list .actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: white;
+    }
+    .admin-panel {
+      display: none;
+    }
+    .admin-panel.show {
+      display: block;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .admin-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .admin-tab {
+      padding: 10px 20px;
+      background: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    .admin-tab.active {
+      background: #667eea;
+      color: white;
+    }
+    .admin-content {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: #f5f7fa;
+      font-weight: 600;
+      color: #303133;
+    }
+    .status-active {
+      color: #67c23a;
+    }
+    .status-inactive {
+      color: #f56c6c;
+    }
+    .url-link {
+      color: #409eff;
+      text-decoration: none;
+    }
+    .url-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <div class="header">
+      <h1>QAP - Quick Access Portal</h1>
+      <div class="actions">
+        <button class="btn btn-info" v-if="isAdmin" @click="exitAdmin">Exit Admin</button>
+        <button class="btn btn-primary" v-else @click="enterAdmin">Admin Mode</button>
+      </div>
+    </div>
+
+    <!-- User View -->
+    <div class="container" v-if="!isAdmin">
+      <div class="search-box">
+        <input type="text" class="search-input" placeholder="Search websites..." v-model="searchQuery" @input="filterWebsites">
+        <div class="categories">
+          <button class="category-tag" :class="{active: selectedCategory === ''}" @click="selectCategory('')">All</button>
+          <button v-for="cat in categories" :key="cat" class="category-tag" :class="{active: selectedCategory === cat}" @click="selectCategory(cat)">{{ cat }}</button>
+        </div>
+      </div>
+
+      <div class="websites-grid" v-if="filteredWebsites.length > 0">
+        <div v-for="site in filteredWebsites" :key="site.id" class="website-card" @click="visitWebsite(site)">
+          <div class="website-icon">
+            <img v-if="site.icon_url" :src="site.icon_url" @error="handleImageError">
+            <span v-else>🔗</span>
+          </div>
+          <div class="website-info">
+            <h4>{{ site.name }}</h4>
+            <p>{{ site.description }}</p>
+            <div class="website-meta">
+              <span class="website-category">{{ site.category }}</span>
+              <span>👁 {{ site.access_count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="empty-state" v-else>
+        <h3>No websites found</h3>
+      </div>
+    </div>
+
+    <!-- Admin View -->
+    <div class="container admin-panel" :class="{show: isAdmin}">
+      <div class="admin-header">
+        <h2>Admin Dashboard</h2>
+        <button class="btn btn-primary" @click="showAddDialog = true">+ Add Website</button>
+      </div>
+
+      <div class="admin-tabs">
+        <button class="admin-tab" :class="{active: adminTab === 'websites'}" @click="adminTab = 'websites'">Websites</button>
+        <button class="admin-tab" :class="{active: adminTab === 'settings'}" @click="adminTab = 'settings'">Settings</button>
+      </div>
+
+      <div class="admin-content" v-if="adminTab === 'websites'">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>URL</th>
+              <th>Category</th>
+              <th>Access</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="site in adminWebsites" :key="site.id">
+              <td>{{ site.id }}</td>
+              <td>{{ site.name }}</td>
+              <td><a :href="site.url" target="_blank" class="url-link">{{ site.url }}</a></td>
+              <td>{{ site.category }}</td>
+              <td>{{ site.access_count }}</td>
+              <td :class="site.is_active ? 'status-active' : 'status-inactive'">{{ site.is_active ? 'Active' : 'Inactive' }}</td>
+              <td>
+                <button class="btn btn-small btn-primary" @click="editWebsite(site)">Edit</button>
+                <button class="btn btn-small btn-danger" @click="deleteWebsite(site.id)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="admin-content" v-if="adminTab === 'settings'">
+        <h3>Admin Settings</h3>
+        <div class="form-group">
+          <label>Admin Secret Code:</label>
+          <input type="text" :value="adminSecret" disabled>
+        </div>
+        <div class="form-group">
+          <label>Access URL:</label>
+          <code>/{{ adminSecret }}/api/admin/*</code>
+        </div>
+        <p style="color: #909399; margin-top: 20px;">
+          Access the admin panel by visiting: <strong>http://your-ip:3333/{{ adminSecret }}</strong>
+        </p>
+      </div>
+
+      <!-- Add/Edit Dialog -->
+      <div class="modal-overlay" :class="{show: showAddDialog || showEditDialog}">
+        <div class="modal">
+          <h2>{{ editingWebsite ? 'Edit Website' : 'Add Website' }}</h2>
+          <div class="form-group">
+            <label>Name *</label>
+            <input type="text" v-model="websiteForm.name" placeholder="Website name">
+          </div>
+          <div class="form-group">
+            <label>URL *</label>
+            <input type="text" v-model="websiteForm.url" placeholder="https://example.com">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea v-model="websiteForm.description" placeholder="Description"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" v-model="websiteForm.category" placeholder="Category">
+          </div>
+          <div class="form-group">
+            <label>Icon URL</label>
+            <input type="text" v-model="websiteForm.icon_url" placeholder="https://example.com/favicon.ico">
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" v-model="websiteForm.is_active"> Active
+            </label>
+          </div>
+          <button class="btn btn-primary" @click="saveWebsite">Save</button>
+          <button class="btn" @click="closeDialog">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>QAP v1.0.0 &copy; 2026 | Total Websites: {{ websites.length }}</p>
+    </div>
+
+    <!-- Admin Login Dialog -->
+    <div class="modal-overlay" :class="{show: showLoginDialog}">
+      <div class="modal">
+        <h2>Admin Access</h2>
+        <div class="form-group">
+          <label>Enter Admin Secret Code</label>
+          <input type="password" v-model="inputSecret" placeholder="Secret code" @keyup.enter="verifySecret">
+        </div>
+        <button class="btn btn-primary" @click="verifySecret">Enter</button>
+        <button class="btn" @click="showLoginDialog = false">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    const ADMIN_SECRET = '123456';
+    const API_BASE = '/';
+    const ADMIN_API_BASE = '/' + ADMIN_SECRET + '/';
+
+    createApp({
+      setup() {
+        const websites = ref([]);
+        const categories = ref([]);
+        const searchQuery = ref('');
+        const selectedCategory = ref('');
+        
+        const isAdmin = ref(false);
+        const adminTab = ref('websites');
+        const adminWebsites = ref([]);
+        
+        const showLoginDialog = ref(false);
+        const showAddDialog = ref(false);
+        const showEditDialog = ref(false);
+        const editingWebsite = ref(null);
+        const inputSecret = ref('');
+        
+        const websiteForm = ref({
+          name: '',
+          url: '',
+          description: '',
+          category: '',
+          icon_url: '',
+          is_active: true
+        });
+
+        const filteredWebsites = computed(() => {
+          return websites.value.filter(site => {
+            const matchesSearch = site.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                                 (site.description && site.description.toLowerCase().includes(searchQuery.value.toLowerCase()));
+            const matchesCategory = !selectedCategory.value || site.category === selectedCategory.value;
+            return matchesSearch && matchesCategory && (site.is_active == 1 || site.is_active === true);
+          });
+        });
+
+        const adminSecret = ADMIN_SECRET;
+
+        // Check if accessed via admin URL
+        const checkAdminFromURL = () => {
+          const path = window.location.pathname;
+          if (path.startsWith('/' + ADMIN_SECRET)) {
+            isAdmin.value = true;
+            sessionStorage.setItem('adminMode', 'true');
+            fetchAllWebsites();
+          }
+        };
+
+        const fetchWebsites = async () => {
+          try {
+            const res = await axios.get(API_BASE + 'api/websites');
+            websites.value = res.data;
+          } catch (e) {
+            console.error('Failed to fetch websites:', e);
+          }
+        };
+
+        const fetchCategories = async () => {
+          try {
+            const res = await axios.get(API_BASE + 'api/categories');
+            categories.value = res.data;
+          } catch (e) {
+            console.error('Failed to fetch categories:', e);
+          }
+        };
+
+        const fetchAllWebsites = async () => {
+          try {
+            const res = await axios.get(API_BASE + 'api/websites');
+            adminWebsites.value = res.data;
+          } catch (e) {
+            console.error('Failed to fetch all websites:', e);
+          }
+        };
+
+        const filterWebsites = () => {
+          // Already handled by computed
+        };
+
+        const selectCategory = (cat) => {
+          selectedCategory.value = cat;
+        };
+
+        const visitWebsite = async (site) => {
+          try {
+            await axios.post(API_BASE + 'api/websites/' + site.id + '/access');
+          } catch (e) {}
+          window.open(site.url, '_blank');
+        };
+
+        const handleImageError = (e) => {
+          e.target.style.display = 'none';
+        };
+
+        const enterAdmin = () => {
+          // Check if already via admin URL
+          if (window.location.pathname.startsWith('/' + ADMIN_SECRET)) {
+            isAdmin.value = true;
+            fetchAllWebsites();
+          } else {
+            showLoginDialog.value = true;
+          }
+        };
+
+        const verifySecret = () => {
+          if (inputSecret.value === ADMIN_SECRET) {
+            isAdmin.value = true;
+            showLoginDialog.value = false;
+            sessionStorage.setItem('adminMode', 'true');
+            // Update URL
+            window.history.pushState({}, '', '/' + ADMIN_SECRET);
+            fetchAllWebsites();
+          } else {
+            alert('Invalid secret code');
+          }
+        };
+
+        const exitAdmin = () => {
+          isAdmin.value = false;
+          sessionStorage.removeItem('adminMode');
+          window.history.pushState({}, '', '/');
+        };
+
+        const editWebsite = (site) => {
+          editingWebsite.value = site;
+          websiteForm.value = { ...site };
+          showEditDialog.value = true;
+        };
+
+        const closeDialog = () => {
+          showAddDialog.value = false;
+          showEditDialog.value = false;
+          editingWebsite.value = null;
+          websiteForm.value = {
+            name: '',
+            url: '',
+            description: '',
+            category: '',
+            icon_url: '',
+            is_active: true
+          };
+        };
+
+        const saveWebsite = async () => {
+          if (!websiteForm.value.name || !websiteForm.value.url) {
+            alert('Name and URL are required');
+            return;
+          }
+          
+          try {
+            if (editingWebsite.value) {
+              await axios.put(ADMIN_API_BASE + 'api/admin/websites/' + editingWebsite.value.id, websiteForm.value);
+              alert('Website updated');
+            } else {
+              await axios.post(ADMIN_API_BASE + 'api/admin/websites', websiteForm.value);
+              alert('Website created');
+            }
+            closeDialog();
+            fetchAllWebsites();
+          } catch (e) {
+            console.error('Failed to save:', e);
+            alert('Failed to save website');
+          }
+        };
+
+        const deleteWebsite = async (id) => {
+          if (!confirm('Are you sure you want to delete this website?')) return;
+          
+          try {
+            await axios.delete(ADMIN_API_BASE + 'api/admin/websites/' + id);
+            fetchAllWebsites();
+          } catch (e) {
+            console.error('Failed to delete:', e);
+            alert('Failed to delete website');
+          }
+        };
+
+        onMounted(() => {
+          checkAdminFromURL();
+          
+          // Check session storage
+          if (sessionStorage.getItem('adminMode') === 'true') {
+            isAdmin.value = true;
+            fetchAllWebsites();
+          }
+          
+          fetchWebsites();
+          fetchCategories();
+        });
+
+        return {
+          websites,
+          categories,
+          searchQuery,
+          selectedCategory,
+          filteredWebsites,
+          isAdmin,
+          adminTab,
+          adminWebsites,
+          adminSecret,
+          showLoginDialog,
+          showAddDialog,
+          showEditDialog,
+          editingWebsite,
+          inputSecret,
+          websiteForm,
+          filterWebsites,
+          selectCategory,
+          visitWebsite,
+          handleImageError,
+          enterAdmin,
+          verifySecret,
+          exitAdmin,
+          editWebsite,
+          closeDialog,
+          saveWebsite,
+          deleteWebsite
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

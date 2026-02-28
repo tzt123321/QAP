@@ -1,0 +1,75 @@
+name: qap
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: qap-postgres
+    environment:
+      POSTGRES_DB: qapdb
+      POSTGRES_USER: qapuser
+      POSTGRES_PASSWORD: qappassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - qap-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qapuser -d qapdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  # Node.js 后端
+  backend:
+    build:
+      context: ./backend-node
+      dockerfile: Dockerfile
+    container_name: qap-backend
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: qapdb
+      DB_USER: qapuser
+      DB_PASSWORD: qappassword
+      PORT: 8080
+      ADMIN_SECRET: "123456"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - qap-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Nginx 前端
+  frontend:
+    build:
+      context: ./frontend-static
+      dockerfile: Dockerfile
+    container_name: qap-frontend
+    ports:
+      - "3333:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - qap-network
+    restart: unless-stopped
+
+networks:
+  qap-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
